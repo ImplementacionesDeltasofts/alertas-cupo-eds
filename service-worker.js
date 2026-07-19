@@ -20,12 +20,17 @@ self.addEventListener('push', (event) => {
   const title = data.title || 'Alerta de Cupo Bajo';
   const options = {
     body: data.body || 'Un cliente tiene el cupo bajo.',
-    icon: 'icons/icon-192.png',
-    badge: 'icons/icon-192.png',
-    vibrate: [200, 100, 200],
+    icon: data.icon || 'icons/icon-192.png',
+    badge: data.badge || 'icons/badge-96.png',
+    vibrate: data.vibrate || [300, 100, 300, 100, 300],
+    requireInteraction: data.requireInteraction !== undefined ? data.requireInteraction : true,
     data: { url: data.url || './index.html' },
     tag: data.tag || 'cupo-alerta',
-    renotify: true
+    renotify: true,
+    actions: data.actions || [
+      { action: 'ver', title: 'Ver detalles' },
+      { action: 'descartar', title: 'Descartar' }
+    ]
   };
 
   event.waitUntil(self.registration.showNotification(title, options));
@@ -33,6 +38,11 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
+
+  if (event.action === 'descartar') {
+    return;
+  }
+
   const url = (event.notification.data && event.notification.data.url) || './index.html';
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
