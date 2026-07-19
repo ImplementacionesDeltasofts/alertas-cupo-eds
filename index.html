@@ -6,6 +6,10 @@
 <title>Alertas de Cupo - EDS Centro Servicios</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Alertas Cupo">
 <style>
   :root { --azul: #1F4E78; --azul-claro: #eef4fa; }
   * { box-sizing: border-box; }
@@ -59,7 +63,27 @@
 </header>
 
 <main>
-  <div class="card">
+  <div id="cardIOS" class="card oculto">
+    <p><b>Estas en iPhone.</b> Antes de activar las notificaciones, Apple exige que esta pagina este instalada en tu pantalla de inicio (no funciona desde una pestaña normal de Safari):</p>
+    <div class="paso">
+      <div class="num">1</div>
+      <div>Abre esta pagina en <b>Safari</b> (no en Chrome ni otro navegador).</div>
+    </div>
+    <div class="paso">
+      <div class="num">2</div>
+      <div>Toca el boton de <b>Compartir</b> (el cuadrado con la flecha hacia arriba).</div>
+    </div>
+    <div class="paso">
+      <div class="num">3</div>
+      <div>Toca <b>"Anadir a Inicio"</b> y confirma.</div>
+    </div>
+    <div class="paso">
+      <div class="num">4</div>
+      <div>Cierra Safari y abre la app desde el nuevo icono azul en tu pantalla de inicio. Ahi si vas a poder activar las notificaciones.</div>
+    </div>
+  </div>
+
+  <div id="cardActivar" class="card">
     <p>Esta pagina activa las notificaciones en tu celular para avisarte cuando un cliente tenga el cupo bajo. Solo se hace una vez.</p>
 
     <div id="estado" class="estado pendiente">Toca el boton para activar las notificaciones.</div>
@@ -99,6 +123,8 @@ function urlBase64ToUint8Array(base64String) {
   return outputArray;
 }
 
+const cardIOS = document.getElementById('cardIOS');
+const cardActivar = document.getElementById('cardActivar');
 const estadoDiv = document.getElementById('estado');
 const btnActivar = document.getElementById('btnActivar');
 const resultadoDiv = document.getElementById('resultado');
@@ -110,8 +136,17 @@ function setEstado(msg, tipo) {
   estadoDiv.className = 'estado ' + tipo;
 }
 
-if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-  setEstado('Este navegador no soporta notificaciones push. Prueba con Chrome en Android.', 'error');
+// En iPhone, Apple exige que la pagina este instalada en pantalla de inicio
+// antes de que el push funcione. Si no lo esta, mostramos las instrucciones
+// en vez de dejarla intentar activar y fallar de forma confusa.
+const esIOS = /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase());
+const esStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+if (esIOS && !esStandalone) {
+  cardIOS.classList.remove('oculto');
+  cardActivar.classList.add('oculto');
+} else if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+  setEstado('Este navegador no soporta notificaciones push. En Android usa Chrome; en iPhone usa Safari con la app instalada en pantalla de inicio.', 'error');
   btnActivar.disabled = true;
 }
 
